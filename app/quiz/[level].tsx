@@ -38,7 +38,8 @@ export default function QuizScreen() {
     // Get the current question!
     const currentQuestion = quizQuestions[currentQuestionIndex];
 
-    if (currentQuestionIndex >= quizQuestions.length) {
+    // Game ends if all questions answered, or time runs out
+    if (currentQuestionIndex >= quizQuestions.length || timeLeft <= 0) {
         return (
             <View style={quizStyles.container}>
                 <Text style={quizStyles.questionText}>
@@ -70,6 +71,10 @@ export default function QuizScreen() {
             {/* This displays the score. You can change the style later */}
             <Text style={quizStyles.scoreText}>
                 {score * 15}
+            </Text>
+
+            <Text style={quizStyles.timerText}>
+                ⏱ {timeLeft}
             </Text>
         
             <Text style={quizStyles.questionText}>
@@ -123,4 +128,9 @@ const quizStyles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#333',
     },
+        timerText: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#e74c3c', 
+     },
 })
