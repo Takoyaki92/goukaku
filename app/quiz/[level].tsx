@@ -1,6 +1,6 @@
 import { getQuestionsByLevel } from '@/data/questions';
 import { useLocalSearchParams } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
@@ -32,8 +32,24 @@ export default function QuizScreen() {
     // These are 3 pieces of data that the user will interact with. and what they start as.
     const [quizQuestions, setQuizQuestions] = useState(getQuestionsByLevel(level as string))
     const [score, setScore] = useState(0);
-    const [timeLeft, setTimeLeft] = useState(60);
+    const [timeLeft, setTimeLeft] = useState(10);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+
+    // Timer logic
+    useEffect(() => {
+        if (currentQuestionIndex >= quizQuestions.length || timeLeft <=0) {
+            return;
+        }
+
+        // set up interval to run every 1s
+        const timer = setInterval(() => {
+            setTimeLeft((prevTime) => prevTime - 1);
+        }, 1000);
+
+        // Stop timer when component unmounts or dependencies change
+        return () => clearInterval(timer);
+     }, [currentQuestionIndex, quizQuestions.length, timeLeft]);
+
 
     // Get the current question!
     const currentQuestion = quizQuestions[currentQuestionIndex];
@@ -46,6 +62,7 @@ export default function QuizScreen() {
                     Quiz Finished! 🎉
                 </Text>
                 <Text>Final Score: {score * 15}</Text>
+                
             </View>
         )
     }
@@ -129,8 +146,11 @@ const quizStyles = StyleSheet.create({
         color: '#333',
     },
         timerText: {
+        position: 'absolute',  // Add this
+        top: 30,              // Add this
+        left: 20,             // Add this (opposite of score's "right")
         fontSize: 24,
         fontWeight: 'bold',
         color: '#e74c3c', 
-     },
+    },
 })
