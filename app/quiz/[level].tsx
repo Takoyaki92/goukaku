@@ -29,11 +29,13 @@ function AnswerChoices({choices, onSelectAnswer}: AnswerChoiceProps) {
 export default function QuizScreen() {
     const { level } = useLocalSearchParams(); // retrieves N3 or N2 or N1, based on what the user chose in the main menu
 
-    // These are 3 pieces of data that the user will interact with. and what they start as.
+    // These are the pieces of data that the user will interact with. and what they start as.
     const [quizQuestions, setQuizQuestions] = useState(getQuestionsByLevel(level as string))
     const [score, setScore] = useState(0);
     const [timeLeft, setTimeLeft] = useState(10);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+    const [showFeedback, setShowFeedback] = useState(false);
+    const [isCorrect, setIsCorrect] = useState(false);
 
     // Timer logic
     useEffect(() => {
@@ -68,17 +70,26 @@ export default function QuizScreen() {
     }
 
     const handleAnswerPress = (selectedChoice: string) => {
-        // 1. Check for correctness
+        // Check for correctness
         const isCorrect = selectedChoice === currentQuestion.correctAnswer;
         console.log(`User selected: ${selectedChoice}`);
 
-        // 2. Update score
+        // Store result in setIsCorrect
+        setIsCorrect(isCorrect);
+
+        // show feedback
+        setShowFeedback(true);
+
+        // Update score
         if (isCorrect) {
             setScore(score + 1)
         }
 
-        // 3. Advance question index
-        setCurrentQuestionIndex(currentQuestionIndex + 1); 
+        // Wait, then advance question index
+        setTimeout(() => {
+            setShowFeedback(false);
+            setCurrentQuestionIndex(currentQuestionIndex + 1);
+        }, 1500); // wait 1.5 seconds
     }
 
     // Display the current question
@@ -103,7 +114,17 @@ export default function QuizScreen() {
                 choices={currentQuestion.choices}
                 onSelectAnswer={handleAnswerPress}
            />
-
+            
+            {/* FEEDBACK - shows after answer selected */}
+            {showFeedback && (
+                <View style={quizStyles.feedbackContainer}>
+                    {isCorrect ? (
+                        <Text style={quizStyles.correctText}>✅ 正解！</Text>
+                    ) : (
+                        <Text style={quizStyles.wrongText}>❌ 不正解</Text>
+                    )}
+                </View>
+            )}
         </View>
     );
 }
@@ -152,5 +173,30 @@ const quizStyles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         color: '#e74c3c', 
+    },
+        feedbackContainer: {
+        position: 'absolute',
+        top: '50%',
+        alignSelf: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        padding: 30,
+        borderRadius: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,  // for Android shadow
+    },
+    correctText: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: '#27ae60',  // Green
+        textAlign: 'center',
+    },
+    wrongText: {
+        fontSize: 32,
+        fontWeight: 'bold',
+        color: '#e74c3c',  // Red
+        textAlign: 'center',
     },
 })
