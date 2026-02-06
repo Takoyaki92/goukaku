@@ -25,14 +25,14 @@ function AnswerChoices({choices, onSelectAnswer}: AnswerChoiceProps) {
     )
 }
 
-// Displays the quiz question
+// Displays all UI elements!
 export default function QuizScreen() {
     const { level } = useLocalSearchParams(); // retrieves N3 or N2 or N1, based on what the user chose in the main menu
 
     // These are the pieces of data that the user will interact with. and what they start as.
     const [quizQuestions, setQuizQuestions] = useState(getQuestionsByLevel(level as string))
     const [score, setScore] = useState(0);
-    const [timeLeft, setTimeLeft] = useState(10);
+    const [timeLeft, setTimeLeft] = useState(60);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [showFeedback, setShowFeedback] = useState(false);
     const [isCorrect, setIsCorrect] = useState(false);
@@ -92,28 +92,42 @@ export default function QuizScreen() {
         }, 1500); // wait 1.5 seconds
     }
 
-    // Display the current question
+    // Displays the UI elements
     return (
         <View style={quizStyles.container}>
 
-            {/* This displays the score. You can change the style later */}
-            <Text style={quizStyles.scoreText}>
-                {score * 15}
-            </Text>
+            {/* Header with timer and score */}
+            <View style={quizStyles.header}>
+                {/* Timer - capsule shaped */}
+                <View style={quizStyles.capsule}>
+                    <Text style={quizStyles.timerIcon}>⏱</Text>
+                    <Text style={quizStyles.timerText}>{timeLeft}</Text>
+                </View>
 
-            <Text style={quizStyles.timerText}>
-                ⏱ {timeLeft}
-            </Text>
-        
-            <Text style={quizStyles.questionText}>
-                {currentQuestion.questionText}
-            </Text>
+                {/* Score - capsule shaped */}
+                <View style={quizStyles.capsule}>
+                    <Text style={quizStyles.coinIcon}>🪙</Text>
+                    <Text style={quizStyles.scoreText}>{score * 15}</Text>
+                </View>
+            </View>
+            
+            {/* Question - top half center */}
+            <View style={quizStyles.questionContainer}>
+                <Text style={quizStyles.questionText}>
+                    {currentQuestion.questionText}
+                </Text>
+                
+                {/* Combo indicator (if you want to add it) */}
+                {/* <Text style={quizStyles.comboText}>3x COMBO! 🔥</Text> */}
+            </View>
 
-            {/* Render the component with answer choices */}
-            <AnswerChoices
-                choices={currentQuestion.choices}
-                onSelectAnswer={handleAnswerPress}
-           />
+            {/* Answer choices - bottom half */}
+            <View style={quizStyles.answersContainer}>
+                <AnswerChoices
+                    choices={currentQuestion.choices}
+                    onSelectAnswer={handleAnswerPress}
+                />
+            </View>
             
             {/* FEEDBACK - shows after answer selected */}
             {showFeedback && (
@@ -137,42 +151,57 @@ const quizStyles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#fff',
     },
-    questionText: {
+        // Question container - top half, centered
+        questionContainer: {
+        flex: 1,  // Takes up available space in top half
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+    },
+        questionText: {
         fontSize: 28,
         fontWeight: 'bold',
         textAlign: 'center',
-        marginVertical: 40,
+        color: '#1a1a1a',
+        lineHeight: 40,
     },
-    choicesContainer: {
-        width: '100%',
-        marginTop: 20,
-    },
-    choiceButton: {
-        backgroundColor: '#f0f0f0',
-        padding: 15,
-        borderRadius: 8,
-        marginVertical: 5,
-        alignItems: 'center',
-    },
-    buttonText: {
-        fontSize: 16,
-        fontWeight: '500',
-    },
-    scoreText: {
-        position: 'absolute',  // ← Key: removes it from normal flow
-        top: 30,               // ← Distance from top (accounts for status bar)
-        right: 20,             // ← Distance from right edge
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#333',
-    },
-        timerText: {
-        position: 'absolute',  // Add this
-        top: 30,              // Add this
-        left: 20,             // Add this (opposite of score's "right")
+        // Combo text (optional - for later)
+    comboText: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#e74c3c', 
+        color: '#e74c3c',
+        marginTop: 20,
+    },
+    // Answer choices - bottom half
+    answersContainer: {
+        flex: 1,  // Takes up bottom half
+        justifyContent: 'center',
+        paddingHorizontal: 20,
+        paddingBottom: 40,
+    },
+    
+    choicesContainer: {
+        width: '100%',
+    },
+    
+    choiceButton: {
+        backgroundColor: '#fff',
+        padding: 18,
+        borderRadius: 12,
+        marginVertical: 8,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+        borderWidth: 2,
+        borderColor: '#e0e0e0',
+    },
+    buttonText: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#333',
     },
         feedbackContainer: {
         position: 'absolute',
@@ -187,16 +216,60 @@ const quizStyles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 8,  // for Android shadow
     },
-    correctText: {
+        correctText: {
         fontSize: 32,
         fontWeight: 'bold',
         color: '#27ae60',  // Green
         textAlign: 'center',
     },
-    wrongText: {
+        wrongText: {
         fontSize: 32,
         fontWeight: 'bold',
         color: '#e74c3c',  // Red
         textAlign: 'center',
     },
+        // Header with timer and score
+        header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingTop: 60,  // Account for status bar
+        paddingBottom: 10,
+    },
+        // Capsule style for timer and score
+        capsule: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fff',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 25,  // Makes it capsule/pill shaped
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
+    },
+        timerIcon: {
+        fontSize: 20,
+        marginRight: 6,
+    },
+    
+        timerText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+    
+        coinIcon: {
+        fontSize: 20,
+        marginRight: 6,
+    },
+    
+        scoreText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+    },
+
 })
