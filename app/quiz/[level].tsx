@@ -1,8 +1,31 @@
 import { getQuestionsByLevel } from '@/data/questions';
-import { useLocalSearchParams } from 'expo-router';
+import * as Haptics from 'expo-haptics';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+const timerDuration = 10;
+
+const getRank = (score: number): string => {
+    if (score >= 500) return 'S';
+    if (score >= 400) return 'A';
+    if (score >= 300) return 'B';
+    if (score >= 200) return 'C';
+    if (score >= 100) return 'D';
+    return 'F';
+};
+
+const getRankColor = (rank: string): string => {
+    switch (rank) {
+        case 'S': return '#FFD700';  // Gold
+        case 'A': return '#00D4FF';  // Cyan/Blue
+        case 'B': return '#00FF00';  // Green
+        case 'C': return '#FFA500';  // Orange
+        case 'D': return '#FF6B6B';  // Red
+        case 'F': return '#999999';  // Gray
+        default: return '#999999';
+    }
+};
 
 interface AnswerChoiceProps {
     choices: string[];
@@ -28,11 +51,12 @@ function AnswerChoices({choices, onSelectAnswer}: AnswerChoiceProps) {
 // Displays all UI elements!
 export default function QuizScreen() {
     const { level } = useLocalSearchParams(); // retrieves N3 or N2 or N1, based on what the user chose in the main menu
+    const router = useRouter();
 
     // These are the pieces of data that the user will interact with. and what they start as.
     const [quizQuestions, setQuizQuestions] = useState(getQuestionsByLevel(level as string))
     const [score, setScore] = useState(0);
-    const [timeLeft, setTimeLeft] = useState(60);
+    const [timeLeft, setTimeLeft] = useState(timerDuration);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [showFeedback, setShowFeedback] = useState(false);
     const [isCorrect, setIsCorrect] = useState(false);
@@ -58,13 +82,62 @@ export default function QuizScreen() {
 
     // Game ends if all questions answered, or time runs out
     if (currentQuestionIndex >= quizQuestions.length || timeLeft <= 0) {
+        const finalScore = score * 30;
+        const rank = getRank(finalScore);
+        const rankColor = getRankColor(rank);
+
         return (
-            <View style={quizStyles.container}>
-                <Text style={quizStyles.questionText}>
-                    Quiz Finished! 🎉
-                </Text>
-                <Text>Final Score: {score * 15}</Text>
-                
+            <View style={quizStyles.resultsContainer}>
+                {/* Rank and Score Display */}
+                <View style={quizStyles.rankSection}>
+                    <Text style={quizStyles.rankLabel}>Rank</Text>
+                    <Text style={[quizStyles.rankLetter, { color: rankColor }]}>
+                        {rank}
+                    </Text>
+                    <Text style={quizStyles.scoreDisplay}>Score: {finalScore}</Text>
+                </View>
+
+                {/* Question List Placeholder */}
+                <View style={quizStyles.questionListContainer}>
+                    <Text style={quizStyles.placeholderText}>
+                        Question results will go here 📝
+                    </Text>
+                    {/* We'll build this later! */}
+                </View>
+
+                {/* Action Buttons */}
+                <View style={quizStyles.buttonContainer}>
+                    <TouchableOpacity 
+                        style={[quizStyles.actionButton, quizStyles.mainMenuButton]}
+                        onPress={() => router.push('/')}
+                    >
+                        <Text style={quizStyles.buttonTextWhite}>Main Menu</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity 
+                        style={[quizStyles.actionButton, quizStyles.playAgainButton]}
+                        onPress={() => {
+                            // Reset the quiz
+                            setScore(0);
+                            setTimeLeft(60);
+                            setCurrentQuestionIndex(0);
+                            setShowFeedback(false);
+                        }}
+                    >
+                        <Text style={quizStyles.buttonTextWhite}>Play Again</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Leaderboard Button (placeholder for later) */}
+                <TouchableOpacity 
+                    style={[quizStyles.actionButton, quizStyles.leaderboardButton]}
+                    onPress={() => {
+                        // TODO: Navigate to leaderboard
+                        alert('Leaderboard coming soon! 🏆');
+                    }}
+                >
+                    <Text style={quizStyles.buttonTextDark}>View Leaderboards</Text>
+                </TouchableOpacity>
             </View>
         )
     }
@@ -74,22 +147,22 @@ export default function QuizScreen() {
         const isCorrect = selectedChoice === currentQuestion.correctAnswer;
         console.log(`User selected: ${selectedChoice}`);
 
-        // Store result in setIsCorrect
-        setIsCorrect(isCorrect);
-
-        // show feedback
-        setShowFeedback(true);
-
-        // Update score
         if (isCorrect) {
-            setScore(score + 1)
+            setScore(score + 1);
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setIsCorrect(true);
+            setShowFeedback(true);
+        } else {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+            setIsCorrect(false);
+            setShowFeedback(true);
         }
 
         // Wait, then advance question index
         setTimeout(() => {
             setShowFeedback(false);
             setCurrentQuestionIndex(currentQuestionIndex + 1);
-        }, 1500); // wait 1.5 seconds
+        }, 1200); // wait 1.2 seconds
     }
 
     // Displays the UI elements
@@ -107,7 +180,7 @@ export default function QuizScreen() {
                 {/* Score - capsule shaped */}
                 <View style={quizStyles.capsule}>
                     <Text style={quizStyles.coinIcon}>🪙</Text>
-                    <Text style={quizStyles.scoreText}>{score * 15}</Text>
+                    <Text style={quizStyles.scoreText}>{score * 30}</Text>
                 </View>
             </View>
             
@@ -270,6 +343,124 @@ const quizStyles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         color: '#333',
+    },
+        // Results Screen Styles
+    resultsContainer: {
+        flex: 1,
+        backgroundColor: '#87CEEB',  // Sky blue like your image
+        padding: 20,
+        paddingTop: 60,
+    },
+
+    // Rank Section
+    rankSection: {
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+
+    rankLabel: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#fff',
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 2, height: 2 },
+        textShadowRadius: 4,
+    },
+
+    rankLetter: {
+        fontSize: 120,
+        fontWeight: 'bold',
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 3, height: 3 },
+        textShadowRadius: 6,
+        marginVertical: 10,
+    },
+
+    scoreDisplay: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#fff',
+        textShadowColor: 'rgba(0, 0, 0, 0.3)',
+        textShadowOffset: { width: 2, height: 2 },
+        textShadowRadius: 4,
+    },
+
+    // Question List Container (placeholder)
+    questionListContainer: {
+        flex: 1,
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        padding: 20,
+        marginBottom: 20,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+        elevation: 5,
+    },
+
+    placeholderText: {
+        fontSize: 18,
+        color: '#999',
+    },
+
+    // Buttons
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 15,
+        gap: 10,
+    },
+
+    actionButton: {
+        flex: 1,
+        padding: 16,
+        borderRadius: 30,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 5,
+    },
+
+    mainMenuButton: {
+        backgroundColor: '#4A90E2',  // Blue
+        borderWidth: 3,
+        borderColor: '#fff',
+    },
+
+    playAgainButton: {
+        backgroundColor: '#5CB85C',  // Green
+        borderWidth: 3,
+        borderColor: '#fff',
+    },
+
+    leaderboardButton: {
+        backgroundColor: '#FFD700',  // Yellow/Gold
+        borderWidth: 3,
+        borderColor: '#fff',
+        width: '100%',
+    },
+
+    buttonTextWhite: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#fff',
+        textShadowColor: 'rgba(0, 0, 0, 0.2)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 2,
+    },
+
+    buttonTextDark: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        textShadowColor: 'rgba(255, 255, 255, 0.5)',
+        textShadowOffset: { width: 1, height: 1 },
+        textShadowRadius: 2,
     },
 
 })
