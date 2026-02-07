@@ -1,8 +1,9 @@
 import { getQuestionsByLevel } from '@/data/questions';
+import { QuestionAndResult } from '@/data/types';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 const timerDuration = 10;
 
@@ -60,6 +61,8 @@ export default function QuizScreen() {
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
     const [showFeedback, setShowFeedback] = useState(false);
     const [isCorrect, setIsCorrect] = useState(false);
+    // Stored answered questions & results in an array
+    const [questionList, setQuestionList] = useState<Array<QuestionAndResult>>([]);
 
     // Timer logic
     useEffect(() => {
@@ -80,7 +83,7 @@ export default function QuizScreen() {
     // Get the current question!
     const currentQuestion = quizQuestions[currentQuestionIndex];
 
-    // Game ends if all questions answered, or time runs out
+    // Results screen: Game ends if all questions answered, or time runs out
     if (currentQuestionIndex >= quizQuestions.length || timeLeft <= 0) {
         const finalScore = score * 30;
         const rank = getRank(finalScore);
@@ -97,13 +100,41 @@ export default function QuizScreen() {
                     <Text style={quizStyles.scoreDisplay}>Score: {finalScore}</Text>
                 </View>
 
-                {/* Question List Placeholder */}
-                <View style={quizStyles.questionListContainer}>
-                    <Text style={quizStyles.placeholderText}>
-                        Question results will go here 📝
-                    </Text>
-                    {/* We'll build this later! */}
-                </View>
+                {/* Question Results List (SCROLLABLE!) */}
+                <ScrollView 
+                    style={quizStyles.questionListContainer}
+                    contentContainerStyle={quizStyles.questionListContent}
+                >
+                    {questionList.map((result, index) => (
+                        <View key={index} style={quizStyles.questionListItem}>
+                            {/* Icon */}
+                            <Text style={quizStyles.resultIcon}>
+                                {result.isCorrect ? '✅' : '❌'}
+                            </Text>
+                            
+                            {/* Question Info */}
+                            <View style={quizStyles.resultContent}>
+                                <Text style={quizStyles.questionNumber}>
+                                    Question {index + 1}:
+                                </Text>
+                                <Text style={quizStyles.questionPreview} numberOfLines={1}>
+                                    {result.questionText}
+                                </Text>
+                            </View>
+                            
+                            {/* Save Button */}
+                            <TouchableOpacity 
+                                style={quizStyles.saveButton}
+                                onPress={() => {
+                                    // TODO: Save to review list
+                                    alert('Saved to review list! 💾');
+                                }}
+                            >
+                                <Text style={quizStyles.saveIcon}>💾</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ))}
+                </ScrollView>
 
                 {/* Action Buttons */}
                 <View style={quizStyles.buttonContainer}>
@@ -119,9 +150,10 @@ export default function QuizScreen() {
                         onPress={() => {
                             // Reset the quiz
                             setScore(0);
-                            setTimeLeft(60);
+                            setTimeLeft(timerDuration);
                             setCurrentQuestionIndex(0);
                             setShowFeedback(false);
+                            setQuestionList([]);
                         }}
                     >
                         <Text style={quizStyles.buttonTextWhite}>Play Again</Text>
@@ -146,6 +178,16 @@ export default function QuizScreen() {
         // Check for correctness
         const isCorrect = selectedChoice === currentQuestion.correctAnswer;
         console.log(`User selected: ${selectedChoice}`);
+
+        // Save question & result to questionList
+        const result = {
+            questionText: currentQuestion.questionText,
+            userAnswer: selectedChoice,
+            correctAnswer: currentQuestion.correctAnswer,
+            isCorrect: isCorrect,
+            choices: currentQuestion.choices,
+        };
+        setQuestionList([...questionList, result]);
 
         if (isCorrect) {
             setScore(score + 1);
@@ -385,22 +427,6 @@ const quizStyles = StyleSheet.create({
         textShadowRadius: 4,
     },
 
-    // Question List Container (placeholder)
-    questionListContainer: {
-        flex: 1,
-        backgroundColor: '#fff',
-        borderRadius: 20,
-        padding: 20,
-        marginBottom: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 6,
-        elevation: 5,
-    },
-
     placeholderText: {
         fontSize: 18,
         color: '#999',
@@ -461,6 +487,61 @@ const quizStyles = StyleSheet.create({
         textShadowColor: 'rgba(255, 255, 255, 0.5)',
         textShadowOffset: { width: 1, height: 1 },
         textShadowRadius: 2,
+    },
+    questionListContainer: {
+        flex: 1,
+        backgroundColor: '#fff',
+        borderRadius: 20,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+        elevation: 5,
+    },
+
+    questionListContent: {
+        padding: 15,
+    },
+
+    questionListItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#f9f9f9',
+        padding: 12,
+        borderRadius: 12,
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+    },
+
+    resultIcon: {
+        fontSize: 24,
+        marginRight: 12,
+    },
+
+    resultContent: {
+        flex: 1,
+    },
+
+    questionNumber: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 4,
+    },
+
+    questionPreview: {
+        fontSize: 13,
+        color: '#666',
+    },
+
+    saveButton: {
+        padding: 8,
+    },
+
+    saveIcon: {
+        fontSize: 20,
     },
 
 })

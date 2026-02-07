@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 export default function MainMenuScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.logo}>合格（Goukaku）</Text>
+      <Text style={styles.logo}>合格（Goukaku!）</Text>
 
       {/* This is your button code: */}
       <Link href="/quiz/N3" style={styles.button}>

@@ -6,3 +6,10 @@ export interface Question {
     correctAnswer: string;
 }
 
+export type QuestionAndResult = {
+    questionText: string;
+    userAnswer: string;
+    correctAnswer: string;
+    isCorrect: boolean;
+    choices: string[];
+};
