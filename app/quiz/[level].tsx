@@ -1,4 +1,5 @@
 import { getQuestionsByLevel } from '@/data/questions';
+import { addToReviewList } from '@/data/review-list';
 import { QuestionAndResult } from '@/data/types';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -125,9 +126,14 @@ export default function QuizScreen() {
                             {/* Save Button */}
                             <TouchableOpacity 
                                 style={quizStyles.saveButton}
-                                onPress={() => {
+                                onPress={async () => {
                                     // TODO: Save to review list
-                                    alert('Saved to review list! 💾');
+                                    const success = await addToReviewList(result);
+                                    if (success) {
+                                        alert('Saved to review list! 📚');
+                                    } else {
+                                        alert('Already in review list! ❗');
+                                    }
                                 }}
                             >
                                 <Text style={quizStyles.saveIcon}>💾</Text>

@@ -19,8 +19,9 @@ export default function MainMenuScreen() {
         <Text style={styles.buttonText}>JLPT N1</Text>
       </Link>
 
-      {/* Add Review buttons here later */}
-      
+      <Link href="/review" style={styles.button}>
+        <Text style={styles.buttonText}>Review</Text>
+      </Link>      
     </View>
   );
 }
